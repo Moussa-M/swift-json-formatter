@@ -20,11 +20,7 @@ function fixJsonString(jsonStr) {
 
 
 function formatJson(jsonStr) {
-	vscode.window.showInformationMessage(jsonStr);
-	
 	let fixedJson = fixJsonString(jsonStr);
-    vscode.window.showInformationMessage(fixedJson);
-	
     return new Promise((resolve, reject) => {
 		fetch("https://jsonformatter.curiousconcept.com/process", {
 			"headers": {

@@ -2,7 +2,10 @@
   "name": "swift-json-formatter",
   "displayName": "Swift JSON Formatter",
   "description": "Swift and easy way to format JSON",
-  "version": "1.0.0",
+  "icon": "swift-json-formatter.png",
+  "publisher": "mmoussa",
+  "pricing": "Free",
+  "version": "1.0.1",
   "repository": {
     "url": "https://github.com/Moussa-M/swift-json-formatter.git",
     "type": "git"

@@ -3,24 +3,12 @@
 const vscode = require('vscode');
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-
-function fixJsonString(jsonStr) {	
-    // Fix Python booleans and None
-	let fixedStr = jsonStr.replace(/True/g, 'true')
-	.replace(/False/g, 'false') // Replace Python booleans with JSON booleans
-	.replace(/None/g, 'null') // Replace Python None with JSON null
-	.replace(/(\w+)\s*:/g, '"$1":')  // Add missing quotation marks around keys
-	.replace(/'/g, '"')  // Replace single quotes with double quotes
-	.replace(/,\s*([}\]])/g, '$1')  // Remove trailing commas
-	.replace(/\/\/[^\n]*/g, '')  // Remove single-line comments
-	.replace(/\/\*[\s\S]*?\*\//g, '');  // Remove multi-line comments
-
-    return fixedStr;
+function hideMsg(nsg,timeout=5000){
+	setTimeout(() => {
+		nsg.dispose();
+	}, timeout);
 }
-
-
 function formatJson(jsonStr) {
-	let fixedJson = fixJsonString(jsonStr);
     return new Promise((resolve, reject) => {
 		fetch("https://jsonformatter.curiousconcept.com/process", {
 			"headers": {
@@ -38,7 +26,7 @@ function formatJson(jsonStr) {
 			},
 			"referrer": "https://jsonformatter.curiousconcept.com/",
 			"referrerPolicy": "strict-origin-when-cross-origin",
-			"body": `data=${encodeURIComponent(fixedJson)}&jsontemplate=1&jsonspec=4&jsonfix=on&autoprocess=&version=2`,
+			"body": `data=${encodeURIComponent(jsonStr)}&jsontemplate=1&jsonspec=4&jsonfix=on&autoprocess=&version=2`,
 			"method": "POST",
 			"mode": "cors",
 			"credentials": "include"
@@ -46,15 +34,18 @@ function formatJson(jsonStr) {
 		.then(jsonResponse => {
 			if (jsonResponse.result && jsonResponse.result.data) {
 				const formattedJson = JSON.stringify(JSON.parse(jsonResponse.result.data.join('')), null, 4);
-				vscode.window.showInformationMessage('JSON formatted successfully');
+				let msg = vscode.window.showInformationMessage('JSON formatted successfully');
+				hideMsg(msg)
 				resolve(formattedJson);
 			} else {
-				vscode.window.showErrorMessage('Failed to format JSON');
+				let msg =vscode.window.showErrorMessage('Failed to format JSON');
+				hideMsg(msg)
 				reject()
 			}
 		})
 		.catch(error => {
-			vscode.window.showErrorMessage('Failed to format JSON');
+			let msg =vscode.window.showErrorMessage('Failed to format JSON');
+			hideMsg(msg)
 			reject(error)
 		});
     });
@@ -73,7 +64,8 @@ function activate(context) {
             let text = document.getText(selection);
 
             if (text.length === 0) {
-                vscode.window.showInformationMessage('No JSON selected.');
+				let msg = vscode.window.showInformationMessage('No JSON selected.');
+				hideMsg(msg)
                 return;
             }
 
@@ -83,7 +75,8 @@ function activate(context) {
                     editBuilder.replace(selection, formattedJson);
                 });
             } catch (e) {
-                vscode.window.showErrorMessage('Failed to format JSON');
+                let msg =vscode.window.showErrorMessage('Failed to format JSON');
+				hideMsg(msg)
             }
         }
     });

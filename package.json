@@ -5,7 +5,7 @@
   "icon": "swift-json-formatter.png",
   "publisher": "mmoussa",
   "pricing": "Free",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": {
     "url": "https://github.com/Moussa-M/swift-json-formatter.git",
     "type": "git"
@@ -30,7 +30,7 @@
     ]
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint ./extension.js",
     "pretest": "npm run lint",
     "test": "node ./test/runTest.js",
     "vscode:prepublish": "npm run esbuild-base -- --minify",

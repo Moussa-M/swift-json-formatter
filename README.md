@@ -1,4 +1,4 @@
-# JSON Format Extension
+# VSCode JSON Format Extension
 
 This is the README for your "JSON Format" extension, a swift and reliable tool to format JSON strings directly in VS Code.
 

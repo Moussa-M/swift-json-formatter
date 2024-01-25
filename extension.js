@@ -9,13 +9,14 @@ function hideMsg(nsg,timeout=5000){
 	}, timeout);
 }
 function formatJson(jsonStr) {
+	jsonStr = JSON.stringify(jsonStr)
     return new Promise((resolve, reject) => {
 		fetch("https://jsonformatter.curiousconcept.com/process", {
 			"headers": {
 				"accept": "application/json, text/javascript, */*; q=0.01",
 				"accept-language": "en-US,en;q=0.9,fr;q=0.8,ar;q=0.7",
 				"content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-				"sec-ch-ua": "\"Google Chrome\";v=\"117\", \"Not;A=Brand\";v=\"8\", \"Chromium\";v=\"117\"",
+				"sec-ch-ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
 				"sec-ch-ua-mobile": "?0",
 				"sec-ch-ua-platform": "\"Linux\"",
 				"sec-fetch-dest": "empty",
@@ -23,10 +24,10 @@ function formatJson(jsonStr) {
 				"sec-fetch-site": "same-origin",
 				"sec-gpc": "1",
 				"x-requested-with": "XMLHttpRequest"
-			},
-			"referrer": "https://jsonformatter.curiousconcept.com/",
-			"referrerPolicy": "strict-origin-when-cross-origin",
-			"body": `data=${encodeURIComponent(jsonStr)}&jsontemplate=1&jsonspec=4&jsonfix=on&autoprocess=&version=2`,
+			  },
+			  "referrer": "https://jsonformatter.curiousconcept.com/",
+			  "referrerPolicy": "strict-origin-when-cross-origin",
+			"body": `data=${encodeURIComponent(jsonStr)}&jsontemplate=2&jsonspec=4&jsonfix=on&autoprocess=&version=2`,
 			"method": "POST",
 			"mode": "cors",
 			"credentials": "include"
@@ -44,7 +45,7 @@ function formatJson(jsonStr) {
 			}
 		})
 		.catch(error => {
-			let msg =vscode.window.showErrorMessage('Failed to format JSON');
+			let msg =vscode.window.showErrorMessage(`Failed to format JSON ${error}`);
 			hideMsg(msg)
 			reject(error)
 		});
@@ -75,7 +76,7 @@ function activate(context) {
                     editBuilder.replace(selection, formattedJson);
                 });
             } catch (e) {
-                let msg =vscode.window.showErrorMessage('Failed to format JSON');
+                let msg =vscode.window.showErrorMessage(`Failed to format JSON ${e}`);
 				hideMsg(msg)
             }
         }

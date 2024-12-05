@@ -60,7 +60,6 @@ function formatJson(jsonStr) {
     return new Promise((resolve, reject) => {
         if (!jsonStr || !jsonStr.trim()) {
             const error = new Error('Invalid JSON: Empty input');
-            showMessage(error.message, 'error');
             reject(error);
             return;
         }
@@ -83,10 +82,8 @@ function formatJson(jsonStr) {
 
             // Format the JSON with proper indentation
             const formattedJson = JSON.stringify(parsed, null, 4);
-            showMessage('JSON formatted successfully');
             resolve(formattedJson);
         } catch (error) {
-            showMessage(error.message, 'error');
             reject(error);
         }
     });
@@ -133,8 +130,9 @@ function activate(context) {
             await editor.edit(editBuilder => {
                 editBuilder.replace(selection, formattedJson);
             });
+            showMessage('JSON formatted successfully');
         } catch (e) {
-            showMessage(`Failed to format JSON: ${e.message}`, 'error');
+            showMessage(e.message, 'error');
         }
     });
 

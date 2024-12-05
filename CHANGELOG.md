@@ -4,6 +4,11 @@ All notable changes to the "swift-json-formatter" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.1.3] - 2024-01-09
+
+### Changed
+- Updated keyboard shortcut to `Ctrl+Shift+F` (or `Cmd+Shift+F` on Mac) for better usability
+
 ## [1.1.1] - 2024-01-09
 
 ### Added

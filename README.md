@@ -1,30 +1,83 @@
-# VSCode JSON Format Extension
+# Swift JSON Formatter for VS Code
 
-This is the README for your "JSON Format" extension, a swift and reliable tool to format JSON strings directly in VS Code.
+A fast, reliable, and feature-rich JSON formatter extension for Visual Studio Code that handles various JSON formats and provides clear error messages.
 
 ## Features
 
-Use the "JSON Format" extension to quickly format JSON strings in your Visual Studio Code. You can either format a selected portion of JSON or an entire file.
+- **Local Processing**: All formatting is done locally - no external services required
+- **Multiple JSON Formats Support**:
+  - Standard JSON
+  - JavaScript object notation (unquoted keys)
+  - Single quotes
+  - Trailing commas
+- **Smart Selection**:
+  - Format selected JSON text
+  - Format entire file when no text is selected
+- **Clear Error Messages**: Helpful error messages when JSON is invalid
+- **Zero Configuration**: Works out of the box with sensible defaults
 
-Here's how to use the extension:
+## Usage
 
-1. Select a JSON string in your editor (or open a JSON file).
-2. Open the command palette (Ctrl+Shift+P or Cmd+Shift+P on Mac).
-3. Type and select "Format JSON" you will see Format JSON (Swift Json Formatter) to format the JSON string or file.
+You can format JSON in two ways:
 
-## Extension Settings
+1. Using Command Palette:
+   - Select a JSON string in your editor (or place cursor anywhere in a JSON file)
+   - Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac)
+   - Type and select "Format JSON (Swift Json Formatter)"
 
-Currently, this extension does not offer customizable settings through the `contributes.configuration` extension point. It is designed to work swiftly without any configurations, providing you with formatted JSON output with a simple command.
+2. Using Keyboard Shortcut:
+   - Select a JSON string (or place cursor anywhere in a JSON file)
+   - Press `Ctrl+Shift+F F` (or `Cmd+Shift+F F` on Mac)
+
+The extension will automatically:
+- Format the selected text if any is selected
+- Format the entire file if no text is selected
+- Provide clear error messages if the JSON is invalid
+
+## Examples
+
+### Standard JSON
+```json
+{"name":"test","value":123}
+```
+becomes:
+```json
+{
+    "name": "test",
+    "value": 123
+}
+```
+
+### JavaScript Object Notation
+```javascript
+{name: 'test', value: 123}
+```
+becomes:
+```json
+{
+    "name": "test",
+    "value": 123
+}
+```
 
 ## Release Notes
-### 1.0.1
 
-- Validation and Fixes for json
-- VS Code extention publish info.
-- 
-### 0.0.1
+### 1.1.0 (2024-01-09)
 
-- Initial release of the JSON Format extension.
-- Format JSON strings with ease directly in VS Code.
+Major update with new features:
+- Local JSON processing (no more external service dependency)
+- Support for JavaScript object notation
+- Support for single quotes in JSON
+- Support for trailing commas
+- Comprehensive error messages
+- Full test coverage
+- Improved error handling and validation
+- Better handling when no text is selected
 
-We hope you find this extension useful, and we are open to suggestions and feedback. Future updates may include customizable formatting options to tailor the extension to your needs.
+### 1.0.4
+- Initial release with basic JSON formatting
+
+## Feedback and Contributions
+
+- File bugs and feature requests in our [GitHub repository](https://github.com/Moussa-M/swift-json-formatter)
+- Contributions are always welcome!

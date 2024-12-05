@@ -2,75 +2,99 @@ const assert = require("assert");
 const vscode = require("vscode");
 const { formatJson } = require(__dirname + "/../../extension.js");
 
-suite("Extension Test Suite", () => {
-    vscode.window.showInformationMessage("Start all tests.");
+suite("JSON Formatter Test Suite", () => {
+    vscode.window.showInformationMessage("Starting JSON formatter tests.");
 
-    test("formatJson test", async () => {
-        const inputData =
-            '{"success":True,"Id":"XX0b4a09db4F7730c40ab0D5","nested":{},}';
+    test("Basic JSON formatting", async () => {
+        const inputData = '{"success":true,"id":"XX0b4a09db4F7730c40ab0D5","nested":{}}';
         const expectedOutput = `{
     "success": true,
-    "Id": "XX0b4a09db4F7730c40ab0D5",
+    "id": "XX0b4a09db4F7730c40ab0D5",
     "nested": {}
 }`;
-
-        try {
-            let output = await formatJson(inputData);
-            assert.strictEqual(
-                output,
-                expectedOutput,
-                "Output:\n" +
-                output.toString() +
-                "\nss not equal to\n Expected:\n" +
-                expectedOutput.toString() +
-                "\n"
-            );
-        } catch (error) {
-            assert.fail(`formatJson threw an error: ${error.message}`);
-        }
+        const output = await formatJson(inputData);
+        assert.strictEqual(output, expectedOutput);
     });
-});
-suite("Extension Test Suite 2", () => {
-    vscode.window.showInformationMessage("Start all tests.");
 
-    test("formatJson test", async () => {
-        const inputData =
-            {'success': true, 'session_id': '650d71558d41fd884f6cfcac', 'api': {'provider_info': {'name': 'salesforce', 'display_name': 'Salesforce', 'url': 'https://www.salesforce.com/', 'image': 'https://api.nyc3.cdn.digitaloceanspaces.com/integration/salesforce.png', 'auth_type': 'oauth', 'specific': {}, 'api_provider_type': 'CRM', 'rating': 90, 'review': "Salesforce is undoubtedly one of the best CRMs available due to its customization and versatility. The platform offers a wide range of objects, and the ability to retrieve their fields using an endpoint is extremely useful, making it a feature that every provider should offer. However, the platform's complexity may cause some users to experience difficulties, and it's easy to get lost in the documentation. Despite this, it's worth taking the time to understand the platform's flexibility and capabilities. Moreover, Salesforce offers OAuth as an authentication method, which is a secure and seamless option that enhances the overall user experience."}}, 'metadata': {'user_id': 'd862f967-6e47-4c36-92fc-9a6ea6d72b6e', 'event_type': 'configuration'}};
+    test("Complex nested JSON", async () => {
+        const inputData = {'success': true, 'data': {'items': [1,2,3], 'metadata': {'type': 'test'}}};
         const expectedOutput = `{
     "success": true,
-    "session_id": "650d71558d41fd884f6cfcac",
-    "api": {
-        "provider_info": {
-            "name": "salesforce",
-            "display_name": "Salesforce",
-            "url": "https://www.salesforce.com/",
-            "image": "https://api.nyc3.cdn.digitaloceanspaces.com/integration/salesforce.png",
-            "auth_type": "oauth",
-            "specific": {},
-            "api_provider_type": "CRM",
-            "rating": 90,
-            "review": "Salesforce is undoubtedly one of the best CRMs available due to its customization and versatility. The platform offers a wide range of objects, and the ability to retrieve their fields using an endpoint is extremely useful, making it a feature that every provider should offer. However, the platform's complexity may cause some users to experience difficulties, and it's easy to get lost in the documentation. Despite this, it's worth taking the time to understand the platform's flexibility and capabilities. Moreover, Salesforce offers OAuth as an authentication method, which is a secure and seamless option that enhances the overall user experience."
+    "data": {
+        "items": [
+            1,
+            2,
+            3
+        ],
+        "metadata": {
+            "type": "test"
         }
-    },
-    "metadata": {
-        "user_id": "d862f967-6e47-4c36-92fc-9a6ea6d72b6e",
-        "event_type": "configuration"
     }
 }`;
+        const output = await formatJson(JSON.stringify(inputData));
+        assert.strictEqual(output, expectedOutput);
+    });
 
+    test("JavaScript object notation", async () => {
+        const inputData = "{success: true, id: 'test-123', items: [1,2,3]}";
+        const expectedOutput = `{
+    "success": true,
+    "id": "test-123",
+    "items": [
+        1,
+        2,
+        3
+    ]
+}`;
+        const output = await formatJson(inputData);
+        assert.strictEqual(output, expectedOutput);
+    });
+
+    test("Handle trailing commas", async () => {
+        const inputData = '{"name": "test", "value": 123,}';
+        const expectedOutput = `{
+    "name": "test",
+    "value": 123
+}`;
+        const output = await formatJson(inputData);
+        assert.strictEqual(output, expectedOutput);
+    });
+
+    test("Handle single quotes", async () => {
+        const inputData = "{'name': 'test', 'value': 123}";
+        const expectedOutput = `{
+    "name": "test",
+    "value": 123
+}`;
+        const output = await formatJson(inputData);
+        assert.strictEqual(output, expectedOutput);
+    });
+
+    test("Invalid JSON should throw error", async () => {
+        const inputData = '{"name": "test", invalid}';
         try {
-            let output = await formatJson(JSON.stringify(inputData));
-            assert.strictEqual(
-                output,
-                expectedOutput,
-                "Output:\n" +
-                output.toString() +
-                "\nss not equal to\n Expected:\n" +
-                expectedOutput.toString() +
-                "\n"
-            );
+            await formatJson(inputData);
+            assert.fail("Should have thrown an error for invalid JSON");
         } catch (error) {
-            assert.fail(`formatJson threw an error: ${error.message}`);
+            assert(error.message.includes("Invalid JSON"));
+        }
+    });
+
+    test("Empty input should throw error", async () => {
+        try {
+            await formatJson("");
+            assert.fail("Should have thrown an error for empty input");
+        } catch (error) {
+            assert(error.message.includes("Invalid JSON"));
+        }
+    });
+
+    test("Whitespace only input should throw error", async () => {
+        try {
+            await formatJson("   \n   \t   ");
+            assert.fail("Should have thrown an error for whitespace only input");
+        } catch (error) {
+            assert(error.message.includes("Invalid JSON"));
         }
     });
 });

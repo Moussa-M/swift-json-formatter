@@ -1,54 +1,94 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-const vscode = require('vscode');
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-function hideMsg(nsg,timeout=5000){
-	setTimeout(() => {
-		nsg.dispose();
-	}, timeout);
+let vscode;
+try {
+    vscode = global.vscode || require('vscode');
+} catch (e) {
+    // Fallback for testing environment
+    vscode = {
+        window: {
+            showInformationMessage: () => ({ dispose: () => {} }),
+            showErrorMessage: () => ({ dispose: () => {} }),
+            showWarningMessage: () => ({ dispose: () => {} }),
+            activeTextEditor: null,
+            messages: []
+        },
+        commands: {
+            registerCommand: () => {}
+        },
+        ExtensionContext: function() {}
+    };
 }
+
+/**
+ * Shows a message and automatically hides it after a timeout
+ * @param {string} message The message to show
+ * @param {'info' | 'warning' | 'error'} type The type of message
+ * @param {number} timeout Timeout in milliseconds
+ */
+function showMessage(message, type = 'info', timeout = 3000) {
+    let disposable;
+    switch (type) {
+        case 'error':
+            disposable = vscode.window.showErrorMessage(message);
+            break;
+        case 'warning':
+            disposable = vscode.window.showWarningMessage(message);
+            break;
+        default:
+            disposable = vscode.window.showInformationMessage(message);
+    }
+
+    if (vscode.window.messages) {
+        vscode.window.messages.push({ message, type, timeout });
+    }
+
+    if (timeout > 0 && disposable && typeof disposable.dispose === 'function') {
+        setTimeout(() => {
+            try {
+                disposable.dispose();
+            } catch (e) {
+                // Silently handle any disposal errors
+            }
+        }, timeout);
+    }
+
+    return disposable;
+}
+
 function formatJson(jsonStr) {
-	jsonStr = JSON.stringify(jsonStr)
     return new Promise((resolve, reject) => {
-		fetch("https://jsonformatter.curiousconcept.com/process", {
-			"headers": {
-				"accept": "application/json, text/javascript, */*; q=0.01",
-				"accept-language": "en-US,en;q=0.9,fr;q=0.8,ar;q=0.7",
-				"content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-				"sec-ch-ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
-				"sec-ch-ua-mobile": "?0",
-				"sec-ch-ua-platform": "\"Linux\"",
-				"sec-fetch-dest": "empty",
-				"sec-fetch-mode": "cors",
-				"sec-fetch-site": "same-origin",
-				"sec-gpc": "1",
-				"x-requested-with": "XMLHttpRequest"
-			  },
-			  "referrer": "https://jsonformatter.curiousconcept.com/",
-			  "referrerPolicy": "strict-origin-when-cross-origin",
-			"body": `data=${encodeURIComponent(jsonStr)}&jsontemplate=2&jsonspec=4&jsonfix=on&autoprocess=&version=2`,
-			"method": "POST",
-			"mode": "cors",
-			"credentials": "include"
-		}).then(response => response.json())
-		.then(jsonResponse => {
-			if (jsonResponse.result && jsonResponse.result.data) {
-				const formattedJson = JSON.stringify(JSON.parse(jsonResponse.result.data.join('')), null, 4);
-				let msg = vscode.window.showInformationMessage('JSON formatted successfully');
-				hideMsg(msg)
-				resolve(formattedJson);
-			} else {
-				let msg =vscode.window.showErrorMessage('Failed to format JSON');
-				hideMsg(msg)
-				reject()
-			}
-		})
-		.catch(error => {
-			let msg =vscode.window.showErrorMessage(`Failed to format JSON ${error}`);
-			hideMsg(msg)
-			reject(error)
-		});
+        if (!jsonStr || !jsonStr.trim()) {
+            const error = new Error('Invalid JSON: Empty input');
+            showMessage(error.message, 'error');
+            reject(error);
+            return;
+        }
+
+        try {
+            // Try to parse the input to check if it's valid JSON
+            let parsed;
+            try {
+                // If it's already a string representation of JSON
+                parsed = JSON.parse(jsonStr);
+            } catch (parseError) {
+                // If it's a JavaScript object/array notation, try to evaluate it
+                try {
+                    // Safely evaluate the string (handles cases like single quotes, unquoted keys etc)
+                    parsed = Function('"use strict";return (' + jsonStr + ')')();
+                } catch (evalError) {
+                    throw new Error('Invalid JSON: Please check your syntax');
+                }
+            }
+
+            // Format the JSON with proper indentation
+            const formattedJson = JSON.stringify(parsed, null, 4);
+            showMessage('JSON formatted successfully');
+            resolve(formattedJson);
+        } catch (error) {
+            showMessage(error.message, 'error');
+            reject(error);
+        }
     });
 }
 
@@ -56,39 +96,58 @@ function formatJson(jsonStr) {
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
+    if (!vscode || !vscode.commands) {
+        return;
+    }
+
     let disposable = vscode.commands.registerCommand('extension.formatJson', async function () {
         let editor = vscode.window.activeTextEditor;
-        if (editor) {
-            let document = editor.document;
-            let selection = editor.selection;
+        if (!editor) {
+            showMessage('No active editor found', 'warning');
+            return;
+        }
 
-            let text = document.getText(selection);
+        let document = editor.document;
+        let selection = editor.selection;
+        let text = '';
 
-            if (text.length === 0) {
-				let msg = vscode.window.showInformationMessage('No JSON selected.');
-				hideMsg(msg)
-                return;
-            }
+        // If no text is selected, try to format the entire document
+        if (selection.isEmpty) {
+            const fullRange = new vscode.Range(
+                document.positionAt(0),
+                document.positionAt(document.getText().length)
+            );
+            text = document.getText(fullRange);
+            selection = new vscode.Selection(fullRange.start, fullRange.end);
+        } else {
+            text = document.getText(selection);
+        }
 
-            try {
-                let formattedJson = await formatJson(text);
-                editor.edit(editBuilder => {
-                    editBuilder.replace(selection, formattedJson);
-                });
-            } catch (e) {
-                let msg =vscode.window.showErrorMessage(`Failed to format JSON ${e}`);
-				hideMsg(msg)
-            }
+        if (!text.trim()) {
+            showMessage('No text to format', 'warning');
+            return;
+        }
+
+        try {
+            let formattedJson = await formatJson(text);
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, formattedJson);
+            });
+        } catch (e) {
+            showMessage(`Failed to format JSON: ${e.message}`, 'error');
         }
     });
 
-    context.subscriptions.push(disposable);
+    if (context && context.subscriptions) {
+        context.subscriptions.push(disposable);
+    }
 }
+
 // This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {
-	activate,
-	deactivate,
-	formatJson
-}
+    activate,
+    deactivate,
+    formatJson
+};

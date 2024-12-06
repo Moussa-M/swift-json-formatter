@@ -56,6 +56,14 @@ function showMessage(message, type = 'info', timeout = 3000) {
     return disposable;
 }
 
+function normalizePythonJson(text) {
+    // Convert Python-style literals to JSON-compatible format
+    return text
+        .replace(/True/g, 'true')
+        .replace(/False/g, 'false')
+        .replace(/None/g, 'null');
+}
+
 function extractAndFormatJsonSections(text) {
     // Find potential JSON sections in the text
     const jsonSections = [];
@@ -124,8 +132,9 @@ function extractAndFormatJsonSections(text) {
         result += text.substring(lastIndex, section.start);
         
         try {
-            // Try to format the JSON section
-            const formattedJson = JSON.stringify(Function('return ' + section.text)(), null, 4);
+            // Normalize Python-style literals and try to format
+            const normalizedJson = normalizePythonJson(section.text);
+            const formattedJson = JSON.stringify(Function('return ' + normalizedJson)(), null, 4);
             result += formattedJson;
         } catch (e) {
             // If formatting fails, keep original text
@@ -151,13 +160,15 @@ function formatJson(jsonStr) {
         try {
             // First try to parse as a complete JSON
             try {
-                const parsed = JSON.parse(jsonStr);
+                const normalizedJson = normalizePythonJson(jsonStr);
+                const parsed = JSON.parse(normalizedJson);
                 resolve(JSON.stringify(parsed, null, 4));
                 return;
             } catch (parseError) {
                 try {
                     // Try to evaluate as a JavaScript object
-                    const parsed = Function('return ' + jsonStr)();
+                    const normalizedJson = normalizePythonJson(jsonStr);
+                    const parsed = Function('return ' + normalizedJson)();
                     resolve(JSON.stringify(parsed, null, 4));
                     return;
                 } catch (evalError) {

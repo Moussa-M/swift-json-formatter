@@ -162,4 +162,31 @@ End of text`;
         const result = await formatJson(input);
         assert.strictEqual(result, input);
     });
+
+    it('should handle Python-style literals', async () => {
+        const input = `{'success': True, 'active': False, 'value': None}`;
+        const expected = `{
+    "success": true,
+    "active": false,
+    "value": null
+}`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+
+    it('should handle Python-style literals in mixed content', async () => {
+        const input = `Debug Response: {'status': True, 'data': None}
+Other info: not JSON
+Result: {'success': False}`;
+        const expected = `Debug Response: {
+    "status": true,
+    "data": null
+}
+Other info: not JSON
+Result: {
+    "success": false
+}`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
 });

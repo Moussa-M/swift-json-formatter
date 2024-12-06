@@ -4,6 +4,12 @@ All notable changes to the "swift-json-formatter" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.2.1] - 2024-01-10
+
+### Fixed
+- Add support for Python-style boolean values (`True`, `False`, `None`)
+- Fix formatting of JSON sections containing Python-style literals
+
 ## [1.2.0] - 2024-01-10
 
 ### Added

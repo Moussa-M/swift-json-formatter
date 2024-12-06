@@ -111,4 +111,55 @@ describe('JSON Formatter Tests', () => {
             assert(error.message.includes('Invalid JSON'));
         }
     });
+
+    it('should format JSON sections in unstructured text', async () => {
+        const input = `Debug Token Response: 
+{'data': {'app_id': '1075719490761124', 'type': 'USER'}}
+Status: Success
+Another response: {"status": "ok", "code": 200}`;
+        const expected = `Debug Token Response: 
+{
+    "data": {
+        "app_id": "1075719490761124",
+        "type": "USER"
+    }
+}
+Status: Success
+Another response: {
+    "status": "ok",
+    "code": 200
+}`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+
+    it('should handle complex nested JSON in unstructured text', async () => {
+        const input = `Response: {'data': [{'verified_name': 'Test', 'code_verification_status': 'EXPIRED'}], 'paging': {'cursors': {'before': 'abc', 'after': 'xyz'}}}
+Status: Done`;
+        const expected = `Response: {
+    "data": [
+        {
+            "verified_name": "Test",
+            "code_verification_status": "EXPIRED"
+        }
+    ],
+    "paging": {
+        "cursors": {
+            "before": "abc",
+            "after": "xyz"
+        }
+    }
+}
+Status: Done`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+
+    it('should preserve non-JSON text', async () => {
+        const input = `Start of text
+Middle section: not json here
+End of text`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, input);
+    });
 });

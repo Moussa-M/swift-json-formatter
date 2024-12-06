@@ -4,6 +4,19 @@ All notable changes to the "swift-json-formatter" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.2.0] - 2024-01-10
+
+### Added
+- Smart JSON extraction from unstructured text
+- Support for formatting JSON sections within logs or other text content
+- Improved handling of mixed content (JSON and non-JSON)
+- New unit tests for mixed content formatting
+
+### Changed
+- Enhanced JSON detection and formatting algorithm
+- Better error handling for invalid JSON sections
+- Improved feedback messages for different formatting scenarios
+
 ## [1.1.3] - 2024-01-09
 
 ### Changed

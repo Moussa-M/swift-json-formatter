@@ -13,6 +13,10 @@ A fast, reliable, and feature-rich JSON formatter extension for Visual Studio Co
 - **Smart Selection**:
   - Format selected JSON text
   - Format entire file when no text is selected
+- **Mixed Content Support**:
+  - Automatically detects and formats JSON sections in logs or other text
+  - Preserves non-JSON content
+  - Handles multiple JSON sections in the same document
 - **Clear Error Messages**: Helpful error messages when JSON is invalid
 - **Zero Configuration**: Works out of the box with sensible defaults
 
@@ -21,17 +25,18 @@ A fast, reliable, and feature-rich JSON formatter extension for Visual Studio Co
 You can format JSON in two ways:
 
 1. Using Command Palette:
-   - Select a JSON string in your editor (or place cursor anywhere in a JSON file)
+   - Select text containing JSON (or place cursor anywhere in a file)
    - Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac)
    - Type and select "Format JSON (Swift Json Formatter)"
 
 2. Using Keyboard Shortcut:
-   - Select a JSON string (or place cursor anywhere in a JSON file)
-   - Press `Ctrl+Shift+F F` (or `Cmd+Shift+F F` on Mac)
+   - Select text containing JSON (or place cursor anywhere in a file)
+   - Press `Ctrl+Shift+F` (or `Cmd+Shift+F` on Mac)
 
 The extension will automatically:
 - Format the selected text if any is selected
 - Format the entire file if no text is selected
+- Format JSON sections within unstructured text while preserving the surrounding content
 - Provide clear error messages if the JSON is invalid
 
 ## Examples
@@ -57,6 +62,31 @@ becomes:
 {
     "name": "test",
     "value": 123
+}
+```
+
+### Mixed Content
+```
+Debug Output:
+{'status': 'success', 'data': [1,2,3]}
+Other info: not JSON
+Response: {"code":200,"message":"OK"}
+```
+becomes:
+```
+Debug Output:
+{
+    "status": "success",
+    "data": [
+        1,
+        2,
+        3
+    ]
+}
+Other info: not JSON
+Response: {
+    "code": 200,
+    "message": "OK"
 }
 ```
 

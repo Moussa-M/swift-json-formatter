@@ -56,33 +56,122 @@ function showMessage(message, type = 'info', timeout = 3000) {
     return disposable;
 }
 
+function extractAndFormatJsonSections(text) {
+    // Find potential JSON sections in the text
+    const jsonSections = [];
+    let currentLine = '';
+    let inJson = false;
+    let jsonStart = -1;
+    let bracketCount = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        currentLine += char;
+
+        if (escapeNext) {
+            escapeNext = false;
+            continue;
+        }
+
+        if (char === '\\') {
+            escapeNext = true;
+            continue;
+        }
+
+        if (char === '"' || char === "'") {
+            inString = !inString;
+            continue;
+        }
+
+        if (!inString) {
+            if (char === '{' || char === '[') {
+                if (bracketCount === 0) {
+                    jsonStart = i;
+                }
+                bracketCount++;
+                inJson = true;
+            } else if (char === '}' || char === ']') {
+                bracketCount--;
+                if (bracketCount === 0 && inJson) {
+                    jsonSections.push({
+                        start: jsonStart,
+                        end: i + 1,
+                        text: text.substring(jsonStart, i + 1)
+                    });
+                    inJson = false;
+                }
+            }
+        }
+
+        if (char === '\n' || i === text.length - 1) {
+            currentLine = '';
+        }
+    }
+
+    // No JSON sections found, return original text
+    if (jsonSections.length === 0) {
+        return text;
+    }
+
+    // Format each JSON section
+    let result = '';
+    let lastIndex = 0;
+
+    for (const section of jsonSections) {
+        // Add text before JSON section
+        result += text.substring(lastIndex, section.start);
+        
+        try {
+            // Try to format the JSON section
+            const formattedJson = JSON.stringify(Function('return ' + section.text)(), null, 4);
+            result += formattedJson;
+        } catch (e) {
+            // If formatting fails, keep original text
+            result += section.text;
+        }
+        
+        lastIndex = section.end;
+    }
+
+    // Add remaining text after last JSON section
+    result += text.substring(lastIndex);
+
+    return result;
+}
+
 function formatJson(jsonStr) {
     return new Promise((resolve, reject) => {
         if (!jsonStr || !jsonStr.trim()) {
-            const error = new Error('Invalid JSON: Empty input');
-            reject(error);
+            reject(new Error('Invalid JSON: Empty input'));
             return;
         }
 
         try {
-            // Try to parse the input to check if it's valid JSON
-            let parsed;
+            // First try to parse as a complete JSON
             try {
-                // If it's already a string representation of JSON
-                parsed = JSON.parse(jsonStr);
+                const parsed = JSON.parse(jsonStr);
+                resolve(JSON.stringify(parsed, null, 4));
+                return;
             } catch (parseError) {
-                // If it's a JavaScript object/array notation, try to evaluate it
                 try {
-                    // Safely evaluate the string (handles cases like single quotes, unquoted keys etc)
-                    parsed = Function('"use strict";return (' + jsonStr + ')')();
+                    // Try to evaluate as a JavaScript object
+                    const parsed = Function('return ' + jsonStr)();
+                    resolve(JSON.stringify(parsed, null, 4));
+                    return;
                 } catch (evalError) {
-                    throw new Error('Invalid JSON: Please check your syntax');
+                    // If both fail, try to extract and format JSON sections
+                    const formattedSections = extractAndFormatJsonSections(jsonStr);
+                    // If no JSON sections were found and the input looks like it should be JSON
+                    if (formattedSections === jsonStr && (jsonStr.includes('{') || jsonStr.includes('['))) {
+                        reject(new Error('Invalid JSON: Please check your syntax'));
+                        return;
+                    }
+                    resolve(formattedSections);
+                    return;
                 }
             }
-
-            // Format the JSON with proper indentation
-            const formattedJson = JSON.stringify(parsed, null, 4);
-            resolve(formattedJson);
         } catch (error) {
             reject(error);
         }
@@ -106,33 +195,44 @@ function activate(context) {
 
         let document = editor.document;
         let selection = editor.selection;
-        let text = '';
 
-        // If no text is selected, try to format the entire document
-        if (selection.isEmpty) {
+        // Check if there is selected text
+        if (!selection.isEmpty) {
+            // Format only the selected text
+            let text = document.getText(selection);
+            if (!text.trim()) {
+                showMessage('Selected text is empty', 'warning');
+                return;
+            }
+            try {
+                let formattedJson = await formatJson(text);
+                await editor.edit(editBuilder => {
+                    editBuilder.replace(selection, formattedJson);
+                });
+                showMessage('Selected JSON formatted successfully');
+            } catch (e) {
+                showMessage(e.message, 'error');
+            }
+        } else {
+            // Format the entire document
             const fullRange = new vscode.Range(
                 document.positionAt(0),
                 document.positionAt(document.getText().length)
             );
-            text = document.getText(fullRange);
-            selection = new vscode.Selection(fullRange.start, fullRange.end);
-        } else {
-            text = document.getText(selection);
-        }
-
-        if (!text.trim()) {
-            showMessage('No text to format', 'warning');
-            return;
-        }
-
-        try {
-            let formattedJson = await formatJson(text);
-            await editor.edit(editBuilder => {
-                editBuilder.replace(selection, formattedJson);
-            });
-            showMessage('JSON formatted successfully');
-        } catch (e) {
-            showMessage(e.message, 'error');
+            let text = document.getText(fullRange);
+            if (!text.trim()) {
+                showMessage('Document is empty', 'warning');
+                return;
+            }
+            try {
+                let formattedJson = await formatJson(text);
+                await editor.edit(editBuilder => {
+                    editBuilder.replace(fullRange, formattedJson);
+                });
+                showMessage('Document JSON formatted successfully');
+            } catch (e) {
+                showMessage(e.message, 'error');
+            }
         }
     });
 

@@ -4,6 +4,16 @@ All notable changes to the "swift-json-formatter" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.2.2] - 2025-06-30
+
+### Added
+- Support for escaped JSON strings (handles `\"` and other escape sequences)
+- Enhanced JSON parsing to automatically unescape escaped quotes before formatting
+- Improved handling of complex nested JSON structures with escaped content
+
+### Fixed
+- Fixed eslint warning for unused variable in JSON extraction logic
+
 ## [1.2.1] - 2024-01-10
 
 ### Fixed

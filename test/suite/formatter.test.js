@@ -189,4 +189,73 @@ Result: {
         const result = await formatJson(input);
         assert.strictEqual(result, expected);
     });
+
+    it('should handle escaped JSON strings', async () => {
+        const input = `[{\"type\":\"cases\",\"default\":\"0\",\"cases\":[{\"type\":\"case\",\"when\":\"company_competition < 21\",\"then\":\"1\"}]}]`;
+        const expected = `[
+    {
+        "type": "cases",
+        "default": "0",
+        "cases": [
+            {
+                "type": "case",
+                "when": "company_competition < 21",
+                "then": "1"
+            }
+        ]
+    }
+]`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+
+    it('should handle complex nested cases structure with escaped quotes', async () => {
+        const input = `[{\"type\":\"cases\",\"default\":\"0\",\"cases\":[{\"type\":\"case\",\"when\":\"company_competition < 21\",\"then\":\"1\"},{\"type\":\"case\",\"when\":\"company_competition >= 21 and company_competition <= 60\",\"then\":\"2\"},{\"type\":\"case\",\"when\":\"company_competition > 60\",\"then\":\"3\"}]},{\"type\":\"cases\",\"default\":\"0\",\"cases\":[{\"type\":\"case\",\"when\":\"company_seats_filled < 51\",\"then\":\"1\"},{\"type\":\"case\",\"when\":\"company_seats_filled >= 51 and company_seats_filled <= 80\",\"then\":\"2\"},{\"type\":\"case\",\"when\":\"company_seats_filled > 80\",\"then\":\"3\"}]}]`;
+        const expected = `[
+    {
+        "type": "cases",
+        "default": "0",
+        "cases": [
+            {
+                "type": "case",
+                "when": "company_competition < 21",
+                "then": "1"
+            },
+            {
+                "type": "case",
+                "when": "company_competition >= 21 and company_competition <= 60",
+                "then": "2"
+            },
+            {
+                "type": "case",
+                "when": "company_competition > 60",
+                "then": "3"
+            }
+        ]
+    },
+    {
+        "type": "cases",
+        "default": "0",
+        "cases": [
+            {
+                "type": "case",
+                "when": "company_seats_filled < 51",
+                "then": "1"
+            },
+            {
+                "type": "case",
+                "when": "company_seats_filled >= 51 and company_seats_filled <= 80",
+                "then": "2"
+            },
+            {
+                "type": "case",
+                "when": "company_seats_filled > 80",
+                "then": "3"
+            }
+        ]
+    }
+]`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
 });

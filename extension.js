@@ -64,6 +64,17 @@ function normalizePythonJson(text) {
         .replace(/None/g, 'null');
 }
 
+function unescapeJsonString(text) {
+    // Remove escaped quotes and other common escape sequences
+    return text
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'")
+        .replace(/\\\\/g, '\\')
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\t/g, '\t');
+}
+
 function extractAndFormatJsonSections(text) {
     // Find potential JSON sections in the text
     const jsonSections = [];
@@ -158,24 +169,27 @@ function formatJson(jsonStr) {
         }
 
         try {
+            // First unescape any escaped JSON strings
+            const unescapedJson = unescapeJsonString(jsonStr);
+            
             // First try to parse as a complete JSON
             try {
-                const normalizedJson = normalizePythonJson(jsonStr);
+                const normalizedJson = normalizePythonJson(unescapedJson);
                 const parsed = JSON.parse(normalizedJson);
                 resolve(JSON.stringify(parsed, null, 4));
                 return;
             } catch (parseError) {
                 try {
                     // Try to evaluate as a JavaScript object
-                    const normalizedJson = normalizePythonJson(jsonStr);
+                    const normalizedJson = normalizePythonJson(unescapedJson);
                     const parsed = Function('return ' + normalizedJson)();
                     resolve(JSON.stringify(parsed, null, 4));
                     return;
                 } catch (evalError) {
                     // If both fail, try to extract and format JSON sections
-                    const formattedSections = extractAndFormatJsonSections(jsonStr);
+                    const formattedSections = extractAndFormatJsonSections(unescapedJson);
                     // If no JSON sections were found and the input looks like it should be JSON
-                    if (formattedSections === jsonStr && (jsonStr.includes('{') || jsonStr.includes('['))) {
+                    if (formattedSections === unescapedJson && (unescapedJson.includes('{') || unescapedJson.includes('['))) {
                         reject(new Error('Invalid JSON: Please check your syntax'));
                         return;
                     }
@@ -260,3 +274,4 @@ module.exports = {
     deactivate,
     formatJson
 };
+

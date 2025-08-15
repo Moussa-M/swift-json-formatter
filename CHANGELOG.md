@@ -4,6 +4,16 @@ All notable changes to the "swift-json-formatter" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.3.0] - 2025-08-15
+
+### Added
+- Support for Python Object/Class to JSON conversion
+    
+    - Improved normalization of Python literals to JSON
+    - Added support for various Python syntax elements
+    - Enhanced error handling for invalid JSON inputs
+    - Introduced new tests for sanitizing Python objects
+
 ## [1.2.2] - 2025-06-30
 
 ### Added

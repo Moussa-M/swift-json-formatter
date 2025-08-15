@@ -84,6 +84,26 @@ describe('JSON Formatter Tests', () => {
         assert.strictEqual(result, expected);
     });
 
+    it('should sanitize Python objects to valid JSON', async () => {
+        const input = `{'messages': [{'content': 'this is a test msg', 'additional_kwargs': {}, 'response_metadata': {}, 'id': '2f08c048-642f-443b-a456-ea929f7ffb3f', 'metadata': {'has_files': False, 'timestamp': '2025-08-15T14:16:06.147Z'}}]}`;
+        const expected = `{
+    "messages": [
+        {
+            "content": "this is a test msg",
+            "additional_kwargs": {},
+            "response_metadata": {},
+            "id": "2f08c048-642f-443b-a456-ea929f7ffb3f",
+            "metadata": {
+                "has_files": false,
+                "timestamp": "2025-08-15T14:16:06.147Z"
+            }
+        }
+    ]
+}`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+
     it('should throw error for invalid JSON', async () => {
         const input = '{"name": "test", invalid}';
         try {
@@ -255,6 +275,25 @@ Result: {
         ]
     }
 ]`;
+        const result = await formatJson(input);
+        assert.strictEqual(result, expected);
+    });
+    it('should handle python objects', async () => {
+        const input = `{'messages': [HumanMessage(content='this is a test msg', additional_kwargs={}, response_metadata={}, id='2f08c048-642f-443b-a456-ea929f7ffb3f', metadata={'has_files': False, 'timestamp': '2025-08-15T14:16:06.147Z'})]}`;
+        const expected = `{
+    "messages": [
+        {
+            "content": "this is a test msg",
+            "additional_kwargs": {},
+            "response_metadata": {},
+            "id": "2f08c048-642f-443b-a456-ea929f7ffb3f",
+            "metadata": {
+                "has_files": false,
+                "timestamp": "2025-08-15T14:16:06.147Z"
+            }
+        }
+    ]
+}`;
         const result = await formatJson(input);
         assert.strictEqual(result, expected);
     });

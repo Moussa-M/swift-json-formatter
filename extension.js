@@ -57,12 +57,44 @@ function showMessage(message, type = 'info', timeout = 3000) {
 }
 
 function normalizePythonJson(text) {
-    // Convert Python-style literals to JSON-compatible format
-    return text
-        .replace(/True/g, 'true')
-        .replace(/False/g, 'false')
-        .replace(/None/g, 'null');
+    // 1) Normalize Python literals to JSON
+    let s = String(text)
+        .replace(/\bTrue\b/g, 'true')
+        .replace(/\bFalse\b/g, 'false')
+        .replace(/\bNone\b/g, 'null');
+
+    // 2) Remove Python/JS identifier(...) wrappers like HumanMessage(...)
+    //    by replacing "<Ident>(" with "{"
+    s = s.replace(/([A-Za-z_]\w*)\s*\(/g, '{');
+
+    // 3) Convert the matching ")" that close those wrappers into "}"
+    //    when followed by a comma, closing bracket, or closing brace.
+    s = s.replace(/\)(\s*[,\]}])/g, '}$1');
+
+    // 4) Convert keyword-arg style "key=value" into JSON '"key": value'
+    s = s.replace(/([A-Za-z_]\w*)\s*=/g, '"$1": ');
+
+    // 5) Ensure unquoted dict keys become quoted: { key: ... } -> { "key": ... }
+    s = s.replace(/([{,]\s*)([A-Za-z_]\w*)(\s*:)/g, '$1"$2"$3');
+
+    // 6) Convert single quotes to double quotes (strings/keys)
+    s = s.replace(/'/g, '"');
+
+    // 7) Try to parse as JSON; if that fails, try a safe eval fallback, then return pretty JSON
+    try {
+        const parsed = JSON.parse(s);
+        return JSON.stringify(parsed, null, 4);
+    } catch(_) {
+        try {
+            const parsed = Function('return ' + s)();
+            return JSON.stringify(parsed, null, 4);
+        } catch(_) {
+            // As a last resort, return best-effort string
+            return s;
+        }
+    }
 }
+
 
 function unescapeJsonString(text) {
     // Remove escaped quotes and other common escape sequences

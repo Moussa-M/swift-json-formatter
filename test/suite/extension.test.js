@@ -97,4 +97,12 @@ suite("JSON Formatter Test Suite", () => {
             assert(error.message.includes("Invalid JSON"));
         }
     });
+    test("Python object should be sanitized to JSON", async () => {
+        try {
+            await formatJson("{'messages': [HumanMessage(content='list your tools', additional_kwargs={}, response_metadata={}, id='2f08c048-642f-443b-a456-ea929f7ffb3f', metadata={'has_files': False, 'timestamp': '2025-08-15T14:16:06.147Z'})]}");
+            assert.fail("Should have thrown an error for whitespace only input");
+        } catch (error) {
+            assert(error.message.includes("Invalid JSON"));
+        }
+    });
 });
